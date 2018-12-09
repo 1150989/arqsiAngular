@@ -1,0 +1,350 @@
+encomendaController
+
+
+const service = require('../services/encomendaServices');
+
+//Simple version, without validation or sanitation
+exports.test = function (req, res) {
+    res.send('Greetings from the Test controller!');
+};
+
+exports.encomenda_create = function (req, res) {
+    service.encomenda_create(req, res);
+};
+
+exports.encomenda_details = function (req, res) {
+    service.encomenda_details(req, res);
+};
+
+exports.encomenda_update = function (req, res) {
+    service.encomenda_update(req, res);
+};
+
+exports.encomenda_delete = function (req, res) {
+    service.encomenda_delete(req, res);
+}
+
+exports.encomenda_details_itens = function (req, res) {
+    service.encomenda_details_itens(req, res);
+};
+
+exports.encomenda_details_itens_item = function (req, res) {
+    service.encomenda_details_itens_item(req, res);    
+};
+
+
+encomendaDto
+
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+//var idvalidator = require('mongoose-id-validator');
+
+let EncomendaSchema = new Schema({
+    name: { type: String, optional: true, max: 100 },
+    nif: { type: Number, required: true },
+    price: { type: Number, required: true },
+    itens: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
+    iva: { type: Number, required: true },
+    morada: { type: String, optional: true, max: 150 }
+    //date: { type: String, required: true }
+});
+//Encomenda.plugin(idvalidator);
+
+
+data = new function () {
+    var date = new Date();
+    return date.getDay() + "-" + date.getMonth() + "-" + date.getFullYear();
+}
+// Export the model
+module.exports = mongoose.model('EncomendaDTO', EncomendaSchema);
+
+
+
+encomenda.model
+
+// JavaScript source code
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+//var idvalidator = require('mongoose-id-validator');
+
+let EncomendaSchema = new Schema({
+    name: { type: String, optional: true, max: 100 },
+    nif: { type: Number, required: true },
+    //_id: { type: String, required: true },
+    price: { type: Number, required: true },
+    itens: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
+    iva: { type: Number, required: true },
+    morada: { type: String, optional: true, max: 150 }
+    //date: { type: String, default:Date.now, required: true }
+});
+//EncomendaSchema.plugin(idvalidator);
+
+// Export the model
+
+EncomendaSchema.methods.toDTO = function () {
+    var itensDTO = [];
+    for (var i = 0; i < this.itens.length; i++) {
+        itensDTO.push(this.itens[i].toDTO());
+    }
+
+    return new encomendaDTO(itensDTO, this.data);
+}
+EncomendaSchema.methods.fromDTO = function (req,res) {
+    var itens = [];
+    for (var i = 0; i < this.itensDTO.length; i++) {
+        itens.push(fromDTO(this.itensDTO[i]));
+    }
+
+    return new encomendaDTO(itens, this.data);
+}
+
+module.exports = mongoose.model('Encomenda', EncomendaSchema);
+
+
+
+
+
+
+item.model
+
+
+// JavaScript source code
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+//var idvalidator = require('mongoose-id-validator');
+const itemRoute = require('../routes/item.route');
+
+let ItemSchema = new Schema({
+    // //_id: { type: String, required: true },
+    //produto: { type: mongoose.Schema.Types.ObjectId, ref: 'Produto' },
+    price: { type: Number, required: true }
+    //material: { type: mongoose.Schema.Types.ObjectId, ref: 'ProdutoMaterial' },
+    //acabamento: { type: mongoose.Schema.Types.ObjectId, ref: 'MaterialAcabamento' }
+    //Dimensao
+
+    
+});
+//ItemSchema.plugin(idvalidator);
+
+exports.validar = function (produto) {
+
+    itemRoute.middleware_requests();
+};
+
+ItemSchema.methods.toDTO = function () {
+    
+    return new itemDTO(this.data);
+}
+
+ItemSchema.methods.fromDTO = function (req, res) {
+   return new itemDTO(this.data);
+}
+
+
+
+
+// Export the model
+
+
+module.exports = mongoose.model('Item', ItemSchema);
+
+
+
+
+encomenda.route 
+
+
+
+const express = require('express');
+const router = express.Router();
+
+// Require the controllers WHICH WE DID NOT CREATE YET!!
+const encomenda_controller = require('../controllers/encomendaController');
+
+
+// a simple test url to check that all of our files are communicating correctly.
+router.get('/test', encomenda_controller.test);
+router.post('/create', encomenda_controller.encomenda_create);
+router.get('/:id', encomenda_controller.encomenda_details);
+router.put('/:id/update', encomenda_controller.encomenda_update);
+router.delete('/:id/delete', encomenda_controller.encomenda_delete);
+router.get('/:id/itens', encomenda_controller.encomenda_details_itens);
+router.get('/:id/itens/:idP', encomenda_controller.encomenda_details_itens_item);
+
+module.exports = router;
+
+//var Client = require('node-rest-client').Client;
+
+//var client = new Client();
+
+//// direct way
+//client.get("http://localhost:1991/encomendas/", function (data, response) {
+//    // parsed response body as js object
+//    console.log(data);
+//    // raw response
+//    console.log(response);
+//});
+
+
+
+
+
+encomendaService
+
+
+
+const Encomenda = require('../models/encomenda.model');
+const ItemService = require('../Services/itemServices');
+
+exports.encomenda_create = function (req, res) {
+    let encomenda = new Encomenda(
+        {
+            name: req.body.name,
+            id: req.body.id,
+            price: req.body.price,
+            iva: req.body.iva,
+            nif: req.body.nif,
+            itens: req.body.itens,
+            morada: req.body.morada
+            //date: req.body.date
+        }
+    );
+
+
+    encomenda.save(function (err) {
+        if (err) {
+            return console.log(err);
+        }
+        res.send('Encomenda Created successfully');
+    })
+};
+
+exports.encomenda_details = function (req, res) {
+    Encomenda.findById(req.params.id, function (err, encomenda) {
+        if (err) return console.log(err);
+        res.send(encomenda);
+    })
+};
+exports.encomenda_details_itens = function (req, res) {
+    Encomenda.findById(req.params.id, function (err, encomenda) {
+        if (err) return console.log(err);
+        res.send(encomenda.itens);
+    })
+};
+exports.encomenda_details_itens_item = function (req, res) {
+    Encomenda.findById(req.params.id, function (err, encomenda) {
+        if (err) return console.log(err);
+        var enc = encomenda;
+        ItemService.item_create();
+        ItemService.findById(req.params.idP, function (err, item) {
+            if (err) return console.log(err);
+            res.send(item);
+        })
+
+        //})
+        //ItemService.findById(enc.id)
+        //    var final = Item.findById(req.params.id);
+
+        //    Encomenda.findById(req.params.id, function (err, encomenda) {
+        //        if (err) return console.log(err);
+        //    //var item = encomenda.itens;
+        //    //var index;
+        //    //for (index = 0; index < item.length; ++index) {
+        //    //    if (item[index].id == req.params.id){
+        //    //        res.send(i);
+        //    //    }
+        //    //}
+        //    res.send(final);
+        //})
+    })
+};
+
+exports.encomenda_update = function (req, res) {
+    Encomenda.findByIdAndUpdate(req.params.id, { $set: req.body }, function (err, Encomenda) {
+        if (err) return console.log(err);
+        res.send('Encomenda udpated.');
+    });
+};
+
+exports.encomenda_delete = function (req, res) {
+    Encomenda.findByIdAndRemove(req.params.id, function (err) {
+        if (err) return console.log(err);
+        res.send('Deleted successfully!');
+    })
+}
+
+
+
+
+
+itemService
+
+const Item = require('../models/item.model');
+
+exports.item_create = function (req, res) {
+    let item = new Item(
+        {
+            //id: req.body.id,
+            produtos: req.body.produtos,
+            price: req.body.price
+
+        }
+    );
+
+
+    item.save(function (err) {
+        if (err) {
+            return console.log(err);
+        }
+        res.send('Item Created successfully');
+    })
+};
+
+exports.item_details = function (req, res) {
+    Item.findById(req.params.id, function (err, item) {
+        if (err) return console.log(err);
+        res.send(item);
+    })
+};
+
+exports.item_update = function (req, res) {
+    Encomenda.findByIdAndUpdate(req.params.id, { $set: req.body }, function (err, item) {
+        if (err) return console.log(err);
+        res.send('Item udpated.');
+    });
+};
+
+exports.item_delete = function (req, res) {
+    Item.findByIdAndRemove(req.params.id, function (err) {
+        if (err) return console.log(err);
+        res.send('Deleted successfully!');
+    })
+}
+
+
+
+
+
+app.js
+
+
+var express = require('express');
+var app = express();
+var bodyParser = require('body-parser');
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+let port = process.env.PORT || 1991;
+
+require('./dbConnection');
+
+const encomenda = require('./routes/encomenda.route');
+app.use('/encomendas', encomenda);
+const item = require('./routes/item.route');
+app.use('/itens', item);
+
+app.listen(port, () => {
+    console.log('Server is up and running on port number ' + port);
+});
